@@ -22,6 +22,7 @@ public:
     SINGL_VOID_METHOD(addModule, (Module * a_module_ptr))
     SINGL_VOID_METHOD(initModules, ());
     SINGL_VOID_METHOD(runModules, ());
+    SINGL_VOID_METHOD(stopModules, ());
 
 private:
     std::vector<Module*> m_module_storage;

@@ -1,5 +1,7 @@
 #include "variable_storage.hpp"
 
+#include <map>
+
 #include "core/logging.hpp"
 
 #include "file_system/file_read.hpp"
@@ -12,12 +14,10 @@ SINGLETON_DEFINITOR(core, VariableStorage);
 
 //--------------------------------------------------------------------------------
 
-const int core::VariableStorage::CORRUPTED_VALUE = -100;
-
 core::VariableStorage::VariableStorage() noexcept
 {
-    registerCommand("set", setCommandHandler);
-    registerCommand("show_var", showVarCommandHandler);
+    registerCommand("var_set", setCommandHandler);
+    registerCommand("var_show", showVarCommandHandler);
 }
 
 core::VariableStorage::Variable::Variable(const Variable& other) noexcept
@@ -31,13 +31,29 @@ core::VariableStorage::Variable::Variable(const Variable& other) noexcept
 void
 core::VariableStorage::setNonstatic(int a_number, int a_value) noexcept
 {
-    m_variables[a_number].value = a_value;
+    if (a_number >= m_variables.size())
+    {
+        LOG_ERROR("Wrong variable id")
+    }
+    else
+    {
+        m_variables[a_number].value = a_value;
+    }
 }
 
 int
 core::VariableStorage::getNonstatic(int a_number) noexcept
 {
-    return m_variables[a_number].value;
+    int result = 0;
+    if (a_number >= m_variables.size())
+    {
+        LOG_ERROR("Wrong variable id")
+    }
+    else
+    {
+        result = m_variables[a_number].value;
+    }
+    return result;
 }
 
 //--------------------------------------------------------------------------------
@@ -63,6 +79,9 @@ core::VariableStorage::addVariableInfoNonstatic(
 void
 core::VariableStorage::reloadValuesFromFileNonstatic() noexcept
 {
+    // TODO: actual command
+    core::Command dummy_result("dummy", nullptr);
+
     auto settings = fs::FileRead::getWordsMap(
         fs::ReadFromStoredFile("main_settings.cfg"), str::Separator::variable);
     for (auto& var : settings)
@@ -70,10 +89,15 @@ core::VariableStorage::reloadValuesFromFileNonstatic() noexcept
         auto it = m_name_to_var_dict.find(var.first);
         if (it != m_name_to_var_dict.end())
         {
-            int num                = it->second;
-            m_variables[num].value = m_variables[num].parser(var.second);
-            LOG_INFO("Variable '%s' was set with value '%s'", var.first,
-                     var.second);
+            int num = it->second;
+            auto value_opt =
+                m_variables[num].parser(dummy_result, var.first, var.second);
+            if (value_opt.has_value())
+            {
+                m_variables[num].value = value_opt.value();
+                LOG_INFO("Variable '%s' was set with value '%s'", var.first,
+                         var.second);
+            }
         }
         else
         {
@@ -105,23 +129,25 @@ core::VariableStorage::setCommandHandlerNonstatic(
         auto it = m_name_to_var_dict.find(i.first);
         if (it != m_name_to_var_dict.end())
         {
-            int num = it->second;
-            int val = m_variables[num].parser(i.second);
-            if (CORRUPTED_VALUE != val)
+            int num  = it->second;
+            auto val = m_variables[num].parser(aCommand, i.first, i.second);
+            if (val.has_value())
             {
-                m_variables[num].value = val;
-                COMMAND_RETURN_MSG(
-                    aCommand,
-                    "Successfuly assigned value '%s' to variable '%s'",
-                    i.second, i.first);
+                // TODO: multiple output for multiple variables
+
+                m_variables[num].value = val.value();
+                // COMMAND_RETURN_MSG(
+                //     aCommand,
+                //     "Successfuly assigned value '%s' to variable '%s'",
+                //     i.second, i.first);
             }
-            else
-            {
-                COMMAND_RETURN_ERROR(aCommand,
-                                     "Unable to set value for '%s' variable: "
-                                     "corrupted variable value '%s'",
-                                     i.first, i.second);
-            }
+            // else
+            // {
+            //     COMMAND_RETURN_ERROR(aCommand,
+            //                          "Unable to set value for '%s' variable:
+            //                          " "corrupted variable value '%s'",
+            //                          i.first, i.second);
+            // }
         }
         else
         {
@@ -137,8 +163,12 @@ void
 core::VariableStorage::showVarCommandHandlerNonstatic(
     core::Command& aCommand) noexcept
 {
+    std::map<std::string_view, int> sorted_name_to_var_dict;
+    sorted_name_to_var_dict.insert(m_name_to_var_dict.begin(),
+                                   m_name_to_var_dict.end());
+
     std::string result;
-    for (const auto& i : m_name_to_var_dict)
+    for (const auto& i : sorted_name_to_var_dict)
     {
         result += "\t'";
         result += i.first;
@@ -146,5 +176,7 @@ core::VariableStorage::showVarCommandHandlerNonstatic(
         result += std::to_string(m_variables[i.second].value);
         result += "\n";
     }
+
+    aCommand.setResultBufferSize(result.size() + 30);
     COMMAND_RETURN_MSG(aCommand, "\nVariable list:\n%sList end", result);
 }

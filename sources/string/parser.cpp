@@ -1,6 +1,7 @@
 #include "parser.hpp"
 
 #include "core/logging.hpp"
+
 #include "string/separators.hpp"
 
 // #include "file.hpp"
@@ -100,12 +101,13 @@ str::Parser::slice(const str::string& aStr,
 void
 str::Parser::normalize(str::string& aStr, Type aType) noexcept
 {
-    if (aType == Type::Upper)
+    // TODO: refactor for cyrilic
+    if (aType == Type::UPPER)
     {
         for (auto& i : aStr)
             if (std::islower(i)) i = std::toupper(i);
     }
-    else if (aType == Type::Lower)
+    else if (aType == Type::LOWER)
     {
         for (auto& i : aStr)
             if (std::isupper(i)) i = std::tolower(i);
@@ -119,3 +121,26 @@ str::Parser::normalize(const str::string& aStr, Type aType) noexcept
     normalize(result, aType);
     return result;
 }
+
+// char*
+// str::Parser::normalize(char* a_str, Type aType) noexcept
+// {
+//     if (aType == Type::UPPER)
+//     {
+//         while (*a_str)
+//         {
+//             if (std::islower(*a_str)) *a_str = std::toupper(*a_str);
+//             ++a_str;
+//         }
+//     }
+//     else if (aType == Type::LOWER)
+//     {
+//         while (*a_str)
+//         {
+//             if (std::isupper(*a_str)) *a_str = std::tolower(*a_str);
+//             ++a_str;
+//         }
+//     }
+
+//     return a_str;
+// }

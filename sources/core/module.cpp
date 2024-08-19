@@ -31,7 +31,7 @@ core::Module::terminate() noexcept
 }
 
 void
-core::Module::variableSetup(VariableInfoArray& a_set_array) noexcept
+core::Module::variableSetup(VariableInfoArray&& a_set_array) noexcept
 {
 }
 
@@ -40,8 +40,15 @@ core::Module::commandSetup() noexcept
 {
 }
 
+void
+core::Module::setVariable(int a_variable_num, int a_variable_value) noexcept
+{
+    core::VariableStorage::set(m_variable_offset + a_variable_num,
+                               a_variable_value);
+}
+
 int
-core::Module::getVatiable(int a_variable_num) noexcept
+core::Module::getVariable(int a_variable_num) noexcept
 {
     return core::VariableStorage::get(m_variable_offset + a_variable_num);
 }
@@ -50,6 +57,6 @@ void
 core::Module::loadVariables() noexcept
 {
     VariableInfoArray var;
-    variableSetup(var);
+    variableSetup(std::move(var));
     m_variable_offset = core::VariableStorage::addVariableInfo(var);
 }

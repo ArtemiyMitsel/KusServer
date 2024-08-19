@@ -75,10 +75,9 @@ void
 core::Logging::clear() noexcept
 {
     fflush(mStream);
-    if (mIsFileOutput)
+    if (mIsFileOutput && mStream != nullptr)
     {
         std::fclose(mStream);
-        delete mStream;
         mStream       = nullptr;
         mIsFileOutput = false;
     }

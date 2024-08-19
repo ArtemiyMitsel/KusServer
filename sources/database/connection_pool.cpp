@@ -85,6 +85,12 @@ data::ConnectionPool::create(
     return result;
 }
 
+const data::Credentials&
+data::ConnectionPool::getCredentials() const noexcept
+{
+    return m_credentials;
+}
+
 data::DatabaseConnection
 data::ConnectionPool::get(size_t a_pool_id) noexcept
 {

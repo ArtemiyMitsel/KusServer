@@ -7,8 +7,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "variable.hpp"
 #include "kus_string.hpp"
+#include "variable.hpp"
 
 //--------------------------------------------------------------------------------
 
@@ -25,7 +25,8 @@ public:
     // static std::vector<Variable> getVariablesFromFile(
     //     const str::string aFilename) noexcept;
     // static std::vector<Variable> getVariablesFromFile(
-    //     const str::string& aFolderName, const str::string aFilename) noexcept;
+    //     const str::string& aFolderName, const str::string aFilename)
+    //     noexcept;
 
     static std::vector<str::string> slice(
         const str::string& aStr,
@@ -34,14 +35,15 @@ public:
 
     enum class Type
     {
-        Nun,
-        Upper,
-        Lower
+        NUN,
+        UPPER,
+        LOWER
     };
     static void normalize(str::string& aStr, Type aType) noexcept;
     static str::string normalize(const str::string& aStr, Type aType) noexcept;
+    // static char* normalize(char* a_str, Type aType) noexcept;
 };
 
-} // namespace file
+} // namespace str
 
 //--------------------------------------------------------------------------------

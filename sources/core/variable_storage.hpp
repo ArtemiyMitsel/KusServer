@@ -3,6 +3,7 @@
 //--------------------------------------------------------------------------------
 
 #include <atomic>
+#include <optional>
 #include <string_view>
 #include <unordered_map>
 #include <vector>
@@ -20,11 +21,13 @@
 namespace core
 {
 
-typedef int (*FPIntGlobVarToInt)(const str::string&);
+typedef std::optional<int> (*FPIntGlobVarToInt)(core::Command&,
+                                                const str::string&,
+                                                const str::string&);
 
 struct VariableInfo
 {
-    const char* name;
+    std::string name;
     FPIntGlobVarToInt func;
 };
 using VariableInfoArray = std::vector<VariableInfo>;
@@ -42,8 +45,6 @@ public:
     SINGL_VOID_METHOD(set, (int aNumber, int aValue));
     SINGL_RET_METHOD(int, get, (int aNumber));
 
-    static const int CORRUPTED_VALUE;
-
 private:
     struct Variable
     {
@@ -55,12 +56,25 @@ private:
     };
 
     std::vector<Variable> m_variables;
-    std::unordered_map<std::string_view, int> m_name_to_var_dict;
+    std::unordered_map<std::string, int> m_name_to_var_dict;
 
     VariableStorage() noexcept;
     COMMAND_HANDLER_NONSTATIC(setCommandHandler);
     COMMAND_HANDLER_NONSTATIC(showVarCommandHandler);
 };
 } // namespace core
+
+#define VARIABLE_HANDLER_BASE(body)                        \
+    std::optional<int> body(core::Command& a_command,      \
+                            const str::string& a_variable, \
+                            const str::string& a_value) noexcept
+
+#define VARIABLE_HANDLER_PTR   VARIABLE_HANDLER_BASE((*))
+#define VARIABLE_HANDLER(name) static VARIABLE_HANDLER_BASE(name)
+
+// #define VARIABLE_HANDLER(name)                                    \
+//     static std::optional<int> name(core::Command& a_command,      \
+//                                    const str::string& a_variable, \
+//                                    const str::string& a_value) noexcept
 
 //--------------------------------------------------------------------------------

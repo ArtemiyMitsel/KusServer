@@ -14,9 +14,10 @@
 #define CREDENTIALS_FOLDER "bin"
 #define CREDENTIALS_FILE   "db_credentials.txt"
 
-#define EXPAND_CREDANTIALS(var_name)                                      \
-    var_name.fields.name, var_name.fields.user, var_name.fields.password, \
-        var_name.fields.hostaddr, var_name.fields.port, var_name.fields.shame
+#define GET_CONN_POOL_INDX(name, arg_num)                               \
+    int name;                                                           \
+    aCommand.getArgumentAsNumber(name, arg_num, m_conn_storage.size()); \
+    name -= 1;
 
 //-----------------------------------------------------------------------------
 
@@ -68,9 +69,10 @@ data::Database::commandSetup() noexcept
     registerCommand("data_remove", removeCredentials);
     registerCommand("data_show", showCredentials);
 
-    registerCommand("data_obtain", obtainConnection);
-    registerCommand("data_return", returnConnection);
-    registerCommand("data_cur", currentConnection);
+    registerCommand("conn_obtain", obtainConnection);
+    registerCommand("conn_return", returnConnection);
+    registerCommand("conn_cur", currentConnection);
+    registerCommand("conn_exec", currentConnection);
 }
 
 //-----------------------------------------------------------------------------
@@ -107,22 +109,10 @@ data::Database::addBaseCredentialsNonstatic(core::Command& aCommand) noexcept
 void
 data::Database::removeCredentialsNonstatic(core::Command& aCommand) noexcept
 {
-    ARGUMENT_SIZE_CHECK(1);
-    GET_ARG_AS_NUM(num, 0);
-
-    if (m_conn_storage.size() >= num)
-    {
-        m_conn_storage.erase(m_conn_storage.begin() + num - 1);
-        dumpCredentialsToFIle();
-        COMMAND_RETURN_MSG(aCommand, "Deleted %lu credential", num);
-    }
-    else
-    {
-        COMMAND_RETURN_ERROR(
-            aCommand,
-            "Wrong credential number. Expected no more than %lu, got %lu",
-            m_conn_storage.size(), num);
-    }
+    GET_CONN_POOL_INDX(num, 0);
+    m_conn_storage.erase(m_conn_storage.begin() + num);
+    dumpCredentialsToFIle();
+    COMMAND_RETURN_MSG(aCommand, "Deleted %lu credential", num + 1);
 }
 
 //-----------------------------------------------------------------------------
@@ -166,24 +156,11 @@ data::Database::configurateShowTable() noexcept
 void
 data::Database::obtainConnectionNonstatic(core::Command& aCommand) noexcept
 {
-    ARGUMENT_SIZE_CHECK(1);
-    GET_ARG_AS_NUM(num, 0);
-    num -= 1;
-
-    if (m_conn_storage.size() > num)
-    {
-        m_obtained_connection = std::move(m_conn_storage[num].get(num));
-        COMMAND_RETURN_MSG(aCommand,
-                           "Successfully obtain connection from pool number %d",
-                           num + 1);
-    }
-    else
-    {
-        COMMAND_RETURN_ERROR(
-            aCommand,
-            "Wrong credential number. Expected no more than %lu, got %lu",
-            m_conn_storage.size(), num);
-    }
+    GET_CONN_POOL_INDX(num, 0);
+    m_obtained_connection = std::move(m_conn_storage[num].get(num));
+    COMMAND_RETURN_MSG(aCommand,
+                       "Successfully obtain connection from pool number %d",
+                       num + 1);
 }
 
 void
@@ -213,7 +190,7 @@ data::Database::currentConnectionNonstatic(core::Command& aCommand) noexcept
 
     if (!m_obtained_connection.hasValue())
     {
-        COMMAND_RETURN_ERROR(aCommand, "No connection obtained at the moment");
+        COMMAND_RETURN_ERROR(aCommand, "%s", no_connection);
         return;
     }
 
@@ -231,6 +208,21 @@ data::Database::configurateCurTable() noexcept
     ConnectionPool::configurateTable(a_table, false);
     return a_table;
 }
+
+void
+data::Database::executeConnectionNonstatic(core::Command& aCommand) noexcept
+{
+    ARGUMENT_SIZE_CHECK(1);
+    auto& comm = aCommand.arguments[0];
+    if (comm == "recreate")
+    {
+        GET_CONN_POOL_INDX(num, 1);
+        m_obtained_connection.createEnvironment(
+            m_conn_storage[num].getCredentials());
+    }
+}
+
+//-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
 

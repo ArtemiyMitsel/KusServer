@@ -26,10 +26,11 @@ public:
     virtual void run() noexcept;
     virtual void terminate() noexcept;
 
-    int getVatiable(int a_variable_num) noexcept;
-
 protected:
-    virtual void variableSetup(VariableInfoArray& a_set_array) noexcept;
+    void setVariable(int a_variable_num, int a_variable_value) noexcept;
+    int getVariable(int a_variable_num) noexcept;
+
+    virtual void variableSetup(VariableInfoArray&& a_set_array) noexcept;
     virtual void commandSetup() noexcept;
 
 private:

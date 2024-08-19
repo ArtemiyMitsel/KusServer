@@ -17,7 +17,7 @@ str::Value::operator float() const noexcept
 str::Value::operator bool() const noexcept
 {
     bool result     = false;
-    auto normalised = Parser::normalize(str, Parser::Type::Lower);
+    auto normalised = Parser::normalize(str, Parser::Type::LOWER);
     if (normalised == "on" || normalised == "yes" || normalised == "true")
         result = true;
     return result;
@@ -67,7 +67,7 @@ str::Value::getType() const noexcept
 {
     Value::Type result = Value::Type::Nun;
 
-    auto normalised = Parser::normalize(str, Parser::Type::Lower);
+    auto normalised = Parser::normalize(str, Parser::Type::LOWER);
     std::unordered_set<char> characters;
     for (auto i : normalised)
     {

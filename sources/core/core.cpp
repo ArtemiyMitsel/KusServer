@@ -31,6 +31,7 @@ core::Core::runNonstatic() noexcept
         CommandHandler::handlCommand();
         Yield::large();
     }
+    ModuleRegistry::stopModules();
 }
 
 bool

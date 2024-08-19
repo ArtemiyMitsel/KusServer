@@ -1,5 +1,8 @@
 #include "database_connection.hpp"
 
+#include <string>
+#include <unordered_map>
+
 #include "string/string_malloc.hpp"
 
 #include "database.hpp"
@@ -90,4 +93,11 @@ data::DatabaseConnection::populateDatabse() noexcept
         *(--body_ptr) = '\0';
         m_sql_conn->createTable("rcomrad", struct_data.name, table_body);
     }
+}
+
+void
+data::DatabaseConnection::createEnvironment(
+    const data::Credentials& a_credentials) noexcept
+{
+    m_sql_conn->createEnvironment(a_credentials);
 }

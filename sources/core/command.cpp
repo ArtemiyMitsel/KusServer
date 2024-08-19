@@ -3,8 +3,11 @@
 #include "string/parser.hpp"
 
 core::Command::Command(const str::string& aStr,
-                       OutputCallback a_outp_call) noexcept
-    : m_result_buffer_size(200), m_output_callback(a_outp_call)
+                       OutputCallback a_outp_call,
+                       void* a_context) noexcept
+    : m_result_buffer_size(200),
+      m_output_callback(a_outp_call),
+      m_context(a_context)
 {
     auto args = str::Parser::slice(aStr, "; \n\t");
     value     = std::move(args[0]);
@@ -28,7 +31,11 @@ core::Command::Command(const str::string& aStr,
 void
 core::Command::setResultBufferSize(size_t a_result_buffer_size) noexcept
 {
-    m_result_buffer_size = a_result_buffer_size;
+    // TODO: automate debug line info size calc
+    m_result_buffer_size =
+        a_result_buffer_size + 100; // debug info (file, func, line)
+    m_result_buffer.reset(nullptr);
+    getResultBuffer();
 }
 
 size_t
@@ -93,23 +100,58 @@ core::Command::callOutputFunc() noexcept
                              "Expected len no more then '%d', received '%d'",
                              expected, received);
     }
-    m_output_callback(m_result_buffer.get());
+    m_output_callback(m_result_buffer.get(), m_context);
 }
 
-std::optional<int>
-core::Command::getArgumentAsNumber(int a_num) noexcept
+bool
+core::Command::argumentSizeCheck(int a_size) noexcept
 {
-    std::optional<int> result;
-    try
+    bool result = true;
+    if (arguments.size() <= a_size)
     {
-        result = std::stoi(arguments[a_num]);
-    }
-    catch (const std::exception& e)
-    {
-        Command& aCommand = *this;
         COMMAND_RETURN_ERROR(
-            aCommand, "Unable to parse credential number, exception '%s'",
-            e.what());
+            (*this),
+            "Incorrect number of arguments. Expected number of arguments"
+            "is at least %d, actual argument count %lu",
+            a_size, arguments.size());
+        result = false;
     }
     return result;
+}
+
+bool
+core::Command::getArgumentAsNumber(int& a_result,
+                                   int a_arg_num,
+                                   int a_max_val) noexcept
+{
+    bool ret = argumentSizeCheck(a_arg_num);
+
+    if (ret)
+    {
+        try
+        {
+            a_result = std::stoi(arguments[a_arg_num]);
+        }
+        catch (const std::exception& e)
+        {
+            COMMAND_RETURN_ERROR((*this),
+                                 "Unable to parse '%s' number, exception '%s'",
+                                 arguments[a_arg_num].c_str(), e.what());
+            ret = false;
+        }
+
+        if (ret)
+        {
+            if (a_result <= a_max_val)
+            {
+                COMMAND_RETURN_ERROR((*this),
+                                     "Too large argument number."
+                                     "Expected no more than %lu, got %lu",
+                                     a_max_val, a_result);
+                ret = false;
+            }
+        }
+    }
+
+    return ret;
 }

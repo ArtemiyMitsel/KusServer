@@ -24,7 +24,7 @@ serv::Server::run() noexcept
 }
 
 void
-serv::Server::variableSetup(core::VariableInfoArray& a_set_array) noexcept
+serv::Server::variableSetup(core::VariableInfoArray&& a_set_array) noexcept
 {
-    a_set_array.emplace_back("token_state", serv::Token::getTokenStatus);
+    a_set_array = std::move(getVariableHandlerRouter());
 }

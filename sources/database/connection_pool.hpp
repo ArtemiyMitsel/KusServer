@@ -35,6 +35,8 @@ public:
     DatabaseConnection get(size_t a_pool_id) noexcept;
     void put(SQLConnection* a_sql_conn) noexcept;
 
+    const Credentials& getCredentials() const noexcept;
+
     void printData(char** a_ptr,
                    core::TablePrintHelper& table,
                    bool a_if_add_poll) const noexcept;

@@ -25,3 +25,12 @@ core::ModuleRegistry::runModulesNonstatic() noexcept
         m_apps.emplace_back(&Module::run, i);
     }
 }
+
+void
+core::ModuleRegistry::stopModulesNonstatic() noexcept
+{
+    for (auto& i : m_apps)
+    {
+        i.join();
+    }
+}

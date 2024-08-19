@@ -52,6 +52,7 @@ private:
     COMMAND_HANDLER_NONSTATIC(obtainConnection);
     COMMAND_HANDLER_NONSTATIC(returnConnection);
     COMMAND_HANDLER_NONSTATIC(currentConnection);
+    COMMAND_HANDLER_NONSTATIC(executeConnection);
 
     static core::TablePrintHelper configurateShowTable() noexcept;
     static core::TablePrintHelper configurateCurTable() noexcept;

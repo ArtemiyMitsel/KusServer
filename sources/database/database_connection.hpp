@@ -20,6 +20,7 @@ public:
 
     void populateDatabse() noexcept;
     void release() noexcept;
+    void createEnvironment(const data::Credentials& a_credentials) noexcept;
 
     size_t getPollId() const noexcept;
     bool hasValue() const noexcept;

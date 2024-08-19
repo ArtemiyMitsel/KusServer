@@ -28,6 +28,7 @@ public:
     {
         NUN,
         INFO,
+        CMD,
         WARNING,
         ERROR
     };
@@ -44,8 +45,17 @@ public:
     SINGL_VOID_METHOD(setOutputType,
                       (OutputType aOutputType, const str::string& aFileName));
 
-    void writeLog(char* tee, size_t tee_size, const char* format, ...)
+    void writeLog(LogLevel a_level,
+                  char* tee,
+                  size_t tee_size,
+                  const char* format,
+                  ...)
     {
+        if (a_level < mLogLevel)
+        {
+            return;
+        }
+
         if (tee)
         {
             va_list args_for_str;
@@ -77,19 +87,23 @@ private:
 #define __FILENAME__ \
     (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
-#define WRITE_LOG_MSG(buff_ptr, buff_size, format, type, ...)               \
-    {                                                                       \
-        core::Logging::getInstance().writeLog(                              \
-            buff_ptr, buff_size, "[%-5s] %-25s| %-30s[%-4d] " format ".\n", \
-            type, __FILENAME__, __func__, __LINE__,                         \
-            FOR_EACH(core::LoggingFunctors::convert, __VA_ARGS__) "");      \
+#define WRITE_LOG_MSG(level, buff_ptr, buff_size, format, type, ...)       \
+    {                                                                      \
+        core::Logging::getInstance().writeLog(                             \
+            level, buff_ptr, buff_size,                                    \
+            "[%-5s] %-25s| %-30s[%-4d] " format ".\n", type, __FILENAME__, \
+            __func__, __LINE__,                                            \
+            FOR_EACH(core::LoggingFunctors::convert, __VA_ARGS__) "");     \
     }
 
-#define WRITE_LOG_MSG_BASE(type, format, ...) \
-    WRITE_LOG_MSG(NULL, 0, format, #type, __VA_ARGS__)
+#define WRITE_LOG_MSG_BASE(level, type, format, ...) \
+    WRITE_LOG_MSG(level, NULL, 0, format, #type, __VA_ARGS__)
 
-#define LOG_INFO(...)    WRITE_LOG_MSG_BASE(INFO, __VA_ARGS__)
-#define LOG_WARNING(...) WRITE_LOG_MSG_BASE(WARN, __VA_ARGS__)
-#define LOG_ERROR(...)   WRITE_LOG_MSG_BASE(ERROR, __VA_ARGS__)
+#define LOG_INFO(...) \
+    WRITE_LOG_MSG_BASE(core::Logging::LogLevel::INFO, INFO, __VA_ARGS__)
+#define LOG_WARNING(...) \
+    WRITE_LOG_MSG_BASE(core::Logging::LogLevel::WARNING, WARN, __VA_ARGS__)
+#define LOG_ERROR(...) \
+    WRITE_LOG_MSG_BASE(core::Logging::LogLevel::ERROR, ERROR, __VA_ARGS__)
 
 } // namespace core
